@@ -1,0 +1,43 @@
+#! /usr/bin/env bash
+#
+# You will need the spark core cli installed first (and nodejs):
+#   npm install -g spark-cli
+#   spark cloud login
+#
+# To set SSID and PASSPHRASE, change below or run:
+#   git config spc.wifi.ssid YOUR_SSID
+#   git config spc.wifi.passphrase YOUR_PASSPHRASE
+
+set -e
+
+SSID="$(git config --get spc.wifi.ssid)"
+PASSPHRASE="$(git config --get spc.wifi.passphrase)"
+ENCRYPTION_TYPE=3
+
+SILENT="false"
+
+SPARK_TTY="$(spark serial list | grep dev | awk '{print $2}')"
+[[ ! -e $SPARK_TTY ]] && \
+  echo "Spark Core not found. Ensure it is connected via USB and in listening mode (flashing blue)." && \
+  echo "To enter listening mode, hold the mode button for 3 seconds." && \
+  exit 1
+
+stty -f $SPARK_TTY 9600
+
+if [ "$SILENT" != "true" ]; then
+  grep -v 'Password:' $SPARK_TTY &
+  cat_pid=$!
+fi
+
+echo -n "w" > $SPARK_TTY
+sleep 0.5
+echo $SSID > $SPARK_TTY
+sleep 0.5
+echo $ENCRYPTION_TYPE > $SPARK_TTY
+sleep 0.5
+echo $PASSPHRASE > $SPARK_TTY
+
+if [ "$SILENT" != "true" ]; then
+  sleep 9
+  kill $cat_pid
+fi

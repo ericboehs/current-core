@@ -1,0 +1,13 @@
+#! /usr/bin/env bash
+
+cp inc/* core-firmware/inc 2>/dev/null
+cp src/* core-firmware/src 2>/dev/null
+
+set -e
+
+cd core-firmware/build/
+make
+cd -
+
+CORE_ID=$(git config --get spc.core-id)
+spark flash ${CORE_ID:=SmartPanel} core-firmware/build/core-firmware.bin
